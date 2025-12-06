@@ -19,6 +19,7 @@ const initDB = async () => {
         CREATE TABLE IF NOT EXISTS users(
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
+        email VARCHAR(150) UNIQUE NOT NULL,
         age INT,
         phone VARCHAR(15),
         address TEXT,
@@ -38,7 +39,7 @@ const initDB = async () => {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
             )
-            `)
+            `);
 };
 
 initDB();
@@ -47,8 +48,25 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello Next Level Developers !')
 });
 
-app.post("/", (req: Request, res: Response) => {
-    console.log(req.body);
+app.post("/users", async (req: Request, res: Response) => {
+    const {name, email} = req.body;
+
+    try{
+        const result = await pool.query(
+            `INSERT INTO users(name, email) VALUES($1, $2) RETURNING *`, [name, email]
+        );
+        return res.status(201).json({
+            success: true,
+            message: "Data Inserted Successfully",
+            data: result.rows[0],
+        });
+
+    }catch(err: any){
+        return res.status(500).json({
+            success: false,
+            message: `error hoise ${err.message}`,
+        })
+    }
 
     res.status(201).json({
         success: true,
